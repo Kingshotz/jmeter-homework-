@@ -24,6 +24,14 @@ Assertions on every request:
 - Apache JMeter 5.6.3
 - [JMeter Plugins Manager](https://jmeter-plugins.org/wiki/PluginsManager/) with **Custom Thread Groups** (`jpgc-casutg`), which provides the Ultimate, Concurrency and Stepping thread groups
 
+Without the plugin JMeter refuses to open the plan. If `lib/ext` is not writable (JMeter under `Program Files`),
+put `jmeter-plugins-casutg-3.1.1.jar` and `jmeter-plugins-cmn-jmeter-0.7.jar` from Maven Central into any folder
+and point JMeter at it:
+
+```
+jmeter -Jsearch_paths=C:/path/to/plugins-folder -t reqres-users-load-test.jmx
+```
+
 ## Running
 
 GUI:
