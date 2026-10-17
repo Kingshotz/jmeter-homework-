@@ -1,0 +1,15 @@
+timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect
+1792187435698,433,Step 1 - Fetch TestUsers,200,OK,Users From Database 1-1,text,true,,248,0,1,1,null,429,0,410
+1792187436191,125,Step 2 - GET /api/users/1 without API key,200,OK,Users From Database 1-1,text,false,"Expected error message ""Missing API Key"", got ""NO_ERROR_IN_RESPONSE""",2693,122,1,1,https://reqres.in/api/users/1,122,0,103
+1792187436334,15,Step 3 - GET /api/users,200,OK,Users From Database 1-1,text,true,,4232,159,1,1,https://reqres.in/api/users?per_page=12,15,0,0
+1792187436383,12,Step 2 - GET /api/users/2 without API key,200,OK,Users From Database 1-1,text,false,"Expected error message ""Missing API Key"", got ""NO_ERROR_IN_RESPONSE""",2682,122,1,1,https://reqres.in/api/users/2,12,0,0
+1792187436396,11,Step 3 - GET /api/users,200,OK,Users From Database 1-1,text,true,,4232,159,1,1,https://reqres.in/api/users?per_page=12,10,0,0
+1792187436409,11,Step 2 - GET /api/users/3 without API key,200,OK,Users From Database 1-1,text,false,"Expected error message ""Missing API Key"", got ""NO_ERROR_IN_RESPONSE""",2683,122,1,1,https://reqres.in/api/users/3,11,0,0
+1792187436421,13,Step 3 - GET /api/users,200,OK,Users From Database 1-1,text,true,,4232,159,1,1,https://reqres.in/api/users?per_page=12,12,0,0
+1792187436438,11,Step 2 - GET /api/users/4 without API key,200,OK,Users From Database 1-1,text,false,"Expected error message ""Missing API Key"", got ""NO_ERROR_IN_RESPONSE""",2668,122,1,1,https://reqres.in/api/users/4,11,0,0
+1792187436450,12,Step 3 - GET /api/users,200,OK,Users From Database 1-1,text,true,,4232,159,1,1,https://reqres.in/api/users?per_page=12,12,0,0
+1792187436466,11,Step 2 - GET /api/users/5 without API key,200,OK,Users From Database 1-1,text,false,"Expected error message ""Missing API Key"", got ""NO_ERROR_IN_RESPONSE""",2697,122,1,1,https://reqres.in/api/users/5,10,0,0
+1792187436478,10,Step 3 - GET /api/users,200,OK,Users From Database 1-1,text,true,,4232,159,1,1,https://reqres.in/api/users?per_page=12,10,0,0
+1792187436491,400,Log warning - email mismatch for user 5,200,"Email mismatch for user id 5: concatenated from DB = charlie.morris@reqres.in, API email = charles.morris@reqres.in",Users From Database 1-1,text,true,,115,0,1,1,null,0,0,0
+1792187436892,10,Step 2 - GET /api/users/6 without API key,200,OK,Users From Database 1-1,text,false,"Expected error message ""Missing API Key"", got ""NO_ERROR_IN_RESPONSE""",2701,122,1,1,https://reqres.in/api/users/6,10,0,0
+1792187436902,10,Step 3 - GET /api/users,200,OK,Users From Database 1-1,text,true,,4232,159,1,1,https://reqres.in/api/users?per_page=12,10,0,0
