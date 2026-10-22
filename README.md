@@ -1,52 +1,56 @@
-# jmeter-homework
+# JMeter + SQL Server homework
 
-JMeter load-testing homework against the public https://reqres.in API.
+`sql-reqres-users-test.jmx` reads users from SQL Server and checks each of them against https://reqres.in.
+
+## Files
+
+| File | What it is |
+|---|---|
+| `sql-reqres-users-test.jmx` | Test plan |
+| `results.csv` | Results of the non-GUI run |
+| `cli-nongui-run.png` | Screenshot of the non-GUI run in the console |
+| `jmeter.log` | Log of the same run, contains the If Controller warning |
+| `setup-testusers.sql` | Creates the `JMeterHomework` database, `TestUsers` table and the read-only `jmeter_user` login |
+| `run-nongui.cmd` | Runs the plan in non-GUI mode and writes `results.csv` |
 
 ## Test plan
 
-`reqres-users-load-test.jmx` sends `GET https://reqres.in/api/users?page={1|2}` under four traffic models.
-Thread groups run one after another (Run Thread Groups consecutively), so each scenario can be analysed on its own.
+1. **SQL Server (JDBC Request)**: `JDBC Connection Configuration` connects to `localhost\SQLEXPRESS` (TCP 1433).
+   `Step 1 - Fetch TestUsers` runs `SELECT id, first_name, last_name, email FROM dbo.TestUsers` and stores the
+   columns as JMeter variables `id_1..id_N`, `first_name_1..`, `last_name_1..`, `email_1..` (`id_#` = row count).
+2. **Parameterization & correlation**: `Step 2 - GET /api/users/${userId}` uses the id from the database and is sent
+   without an API key. A JSON Extractor takes `$.error` into `errorMessage`, and a Response Assertion with
+   *Ignore Status* checks that it equals `Missing API Key`.
+3. **Email pattern**: `Step 3 - GET /api/users?per_page=12` is sent with the `x-api-key` header (classic API key from
+   the reqres docs). A JSON Extractor picks the current user's `email`, `first_name` and `last_name`, and a Response
+   Assertion checks `email == lowercase(first_name.last_name)@reqres.in`.
+4. **Controllers**:
+   - *Loop Controller* runs `${id_#}` times, once per database row. A Counter (`idx`) and User Parameters
+     select the current row (`userId`, `firstName`, `lastName`, `concatEmail`).
+   - *If Controller* compares the email concatenated from the database names with the API email. On mismatch a
+     JSR223 Sampler writes `log.warn(...)` to `jmeter.log`.
+5. **Non-GUI**: `run-nongui.cmd` executes
+   `jmeter -n -t sql-reqres-users-test.jmx -l results.csv -j jmeter.log -Jjmeter.save.saveservice.output_format=csv`.
 
-| Scenario | Thread Group | Load shape |
-|---|---|---|
-| Regular Users | Ultimate Thread Group | Two overlapping waves: 20 users ramp up over 60s, 10 more join at 60s, hold at the 30-user peak, then ramp down to zero |
-| Peak-Time Users | Concurrency Thread Group (burst) | 50 users start with no ramp-up and are released together by a Synchronizing Timer, one spike every ~10s for 90s |
-| Long-Term Users | Thread Group + Constant Throughput Timer | 10 users for 600s (configurable), throughput capped at 60 requests/min shared across the group |
-| Users Simulating Failures | Stepping Thread Group (Step-Up) | +10 users every 20s up to 200; the test stops on the first failed sample, so this group runs last |
+## Results
 
-Assertions on every request:
+- Step 1: 6 users fetched from `TestUsers`.
+- Step 2: fails for every user. reqres.in no longer returns `Missing API Key` when the key is missing: it returns
+  `200` with the user data, so `$.error` is absent and the extractor falls back to `NO_ERROR_IN_RESPONSE`.
+- Step 3: passes for every user. reqres emails use a dot between the names (`george.bluth@reqres.in`).
+- Step 4: user 5 is stored in the database as `Charlie Morris`, while the API has `Charles Morris`, so the If
+  Controller logs a warning for that user only.
 
-- **Response Assertion - JSON keys**: body contains `"data"`, `"total_pages"`, `"page"`, `"per_page"` and `"total"`
-- **Response Assertion - Status 200**: response code equals 200
+## Running it
 
-## Requirements
-
-- Apache JMeter 5.6.3
-- [JMeter Plugins Manager](https://jmeter-plugins.org/wiki/PluginsManager/) with **Custom Thread Groups** (`jpgc-casutg`), which provides the Ultimate, Concurrency and Stepping thread groups
-
-Without the plugin JMeter refuses to open the plan. If `lib/ext` is not writable (JMeter under `Program Files`),
-put `jmeter-plugins-casutg-3.1.1.jar` and `jmeter-plugins-cmn-jmeter-0.7.jar` from Maven Central into any folder
-and point JMeter at it:
-
-```
-jmeter -Jsearch_paths=C:/path/to/plugins-folder -t reqres-users-load-test.jmx
-```
-
-## Running
-
-GUI:
-
-```
-jmeter -t reqres-users-load-test.jmx
-```
-
-Non-GUI with an HTML report:
+Requirements: JMeter 5.6.3, SQL Server with TCP enabled, and the Microsoft JDBC driver
+(`mssql-jdbc-12.8.1.jre11.jar`). The plan loads the driver from the path in *Test Plan > Add directory or jar to
+classpath*; change it if the jar is elsewhere.
 
 ```
-jmeter -n -t reqres-users-load-test.jmx -l results/results.jtl -e -o results/report
+sqlcmd -S localhost\SQLEXPRESS -E -C -i setup-testusers.sql
+run-nongui.cmd
 ```
 
-Optional properties:
-
-- `-JlongTermDuration=<seconds>` - length of the Long-Term Users run (default 600)
-- `-JapiKey=<key>` - value of the `x-api-key` header (default `reqres-free-v1`)
+Connection settings can be overridden with `-JdbUrl=...`, `-JdbUser=...`, `-JdbPassword=...`, and the API key with
+`-JapiKey=...`.
